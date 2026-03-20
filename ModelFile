@@ -1,0 +1,15 @@
+# 1. Point to your local GGUF file
+FROM "C:\\Users\\saggu\\Downloads\\Telegram Desktop\\LFM2.5-1.2B-Instruct.Q4_K_M.gguf"
+
+# 2. Set the exact ChatML template we used during training
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
+"""
+
+# 3. Set your engineering parameters
+PARAMETER temperature 0.2
+PARAMETER num_ctx 2048
+PARAMETER stop "<|im_end|>"

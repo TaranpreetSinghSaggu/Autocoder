@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "autocoder": {
+      "command": "python",
+      "args": [
+        "C:\\codes\\Autocoder\\mcp_server.py"
+      ]
+    }
+  }
+}
