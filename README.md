@@ -1,102 +1,152 @@
-# Autocoder (Ollama + Jupyter)
+﻿# Autocoder
 
-This project is a local code-generation workflow built around:
-- a custom Ollama model named `autocoder`
-- Jupyter Notebook usage with a `%%prompt` cell magic
-- optional terminal testing through `main.py`
+> *A lightning-fast local code generation assistant powered by Ollama. Works completely offline with zero-latency AI-assisted coding inside Jupyter Notebooks.*
 
-`mcp/` is present in the repository but **not part of this workflow**.
+Autocoder is a minimal, focused Python ecosystem that integrates a fine-tuned Ollama model with Jupyter Notebooks via a custom `%%prompt` magic command. Write natural language prompts and watch the AI stream Python code directly into executable cells.
 
-## What has been implemented
-
-- `ModelFile` defines how to build the Ollama model (`FROM` local `.gguf`, template, and parameters).
-- `ollama_connection.py` registers `%%prompt` (IPython cell magic) that:
-	- sends notebook prompts to Ollama (`autocoder` model),
-	- streams response live in notebook output,
-	- injects generated Python code into the next input cell.
-- `main.py` sends a direct chat prompt to the same model as a quick CLI verification.
-- `magic.ipynb` exists as the working notebook scaffold for this flow.
+---
 
 ## Prerequisites
 
-- Windows with Python 3.13+
-- [Ollama](https://ollama.com/) installed and running
-- A local `.gguf` model file path you can reference in `ModelFile`
+Before you start, ensure you have the following installed:
 
-## Initialization (from scratch)
+1. **[Ollama](https://ollama.com/):** For running the model engine locally.
+2. **[uv](https://docs.astral.sh/uv/):** Python package and project manager (fast alternative to pip/venv).
+3. **Python 3.13+** (bundled by uv)
 
-### 1) Prepare Python environment
+---
 
-From project root:
+## Quick Start
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -e .
+### Step 1: Pull the Model
+
+Open your terminal and run:
+
+```bash
+ollama run saggutaranpreetsingh/autocoder
 ```
 
-### 2) Build the Ollama model
+*(Type `/bye` to exit the chat once it downloads. The model is now cached on your machine.)*
 
-Edit `ModelFile` first:
-- Update the `FROM "...gguf"` path to your machine’s actual `.gguf` location.
+### Step 2: Set Up the Environment
 
-Then run:
+Clone/enter the repository and sync dependencies using `uv`:
 
-```powershell
-ollama create autocoder -f ModelFile
+```bash
+# Clone the repository (if needed)
+git clone https://github.com/TaranpreetSinghSaggu
+cd Autocoder
+
+# Sync dependencies and activate environment
+uv sync
+source .venv/bin/activate  # On Windows: .\.venv\Scripts\Activate.ps1
 ```
 
-Verify model is available:
+### Step 3: Launch Jupyter & Load the Extension
 
-```powershell
-ollama list
-```
+Start Jupyter from the project directory:
 
-### 3) Register Jupyter kernel
-
-```powershell
-python -m ipykernel install --user --name=autocoder-env --display-name "Python (Autocoder)"
-```
-
-### 4) Start Jupyter
-
-```powershell
+```bash
 jupyter notebook
 ```
 
-Open `magic.ipynb` and select kernel **Python (Autocoder)**.
+1. Open `magic.ipynb` or create a new notebook.
+2. In the **first cell**, load the extension:
+   ```python
+   %load_ext ollama_connection
+   ```
 
-### 5) Load notebook magic
+### Step 4: Use the `%%prompt` Magic
 
-In the first notebook cell:
+In any cell, use the `%%prompt` magic followed by your instruction:
 
-```python
-%run ollama_connection.py
+```text
+%%prompt
+Solve the python problem regarding topological sort 
 ```
 
-Then use:
+Hit `Shift + Enter`. The AI will:
+- Stream the response live in the output area
+- Automatically inject the generated Python code into the next input cell below
+
+---
+
+## What's Implemented
+
+| File | Purpose |
+|------|---------|
+| `ollama_connection.py` | IPython magic (`%%prompt`) that streams Ollama responses and injects code into Jupyter cells |
+| `main.py` | CLI demo: sends a prompt to Ollama and prints the response (optional) |
+| `magic.ipynb` | Pre-configured notebook scaffold for using the `%%prompt` magic |
+| `ModelFile` | (Optional) Defines how to build a custom Ollama model from a local `.gguf` file |
+| `pyproject.toml` | Python dependencies and project metadata |
+| `mcp/` | (Learning purposes only — not part of active workflow) |
+
+---
+
+## Usage Examples
+
+### Generate Code in Jupyter
 
 ```python
 %%prompt
-Write a Python function that solves shortest path using Dijkstra and A* with an example.
+Solve the python problem regarding topological sort and tell the possible question linked with topic
 ```
 
-## Quick terminal test (optional)
+The magic command will:
+1. Send your prompt to the `saggutaranpreetsingh/autocoder` model running locally
+2. Stream the generated code in real-time below the cell
+3. Auto-inject the final Python code into a new cell for execution
 
-Run:
+### Quick Terminal Test (Optional)
 
-```powershell
+To verify your Ollama setup without Jupyter:
+
+```bash
 python main.py
 ```
 
-If Ollama and model setup are correct, you should get a generated response from `autocoder`.
+This runs a synchronous chat request to the model and prints the response.
+
+---
+
+## Troubleshooting
+
+**Ollama not connecting?**
+- Ensure Ollama is running: `ollama serve` (or check your system tray)
+- Verify the model exists: `ollama list`
+- Re-pull if needed: `ollama run saggutaranpreetsingh/autocoder`
+
+**Magic command not loading?**
+- Make sure you're using the correct `uv`-managed kernel in Jupyter
+- Check that `ollama_connection.py` is in the project root
+- Reload Jupyter or restart the kernel
+
+**PowerShell activation issues (Windows)?**
+- Run as Administrator and execute:
+  ```powershell
+  Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+  ```
+- Then retry: `.\.venv\Scripts\Activate.ps1`
+
+---
+
+## Project Structure
+
+```
+Autocoder/
+├── ollama_connection.py    # IPython magic registration
+├── main.py                 # CLI test script
+├── magic.ipynb             # Jupyter notebook scaffold
+├── ModelFile               # (Optional) Ollama model builder config
+├── pyproject.toml          # Project dependencies
+└── mcp/                    # (Learning purposes only)
+```
+
+---
 
 ## Notes
 
-- If PowerShell blocks activation scripts, run PowerShell as current user and execute:
-	```powershell
-	Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
-	```
-- Keep Ollama running before notebook/CLI prompts.
-- Ensure `ModelFile` points to a valid local `.gguf`; model creation fails otherwise.
+- Keep Ollama running before executing notebooks or CLI commands.
+- The `%%prompt` magic automatically cleans markdown formatting from code output.
+- `ModelFile` is optional—by default, the setup uses `saggutaranpreetsingh/autocoder` from Ollama.
